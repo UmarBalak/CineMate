@@ -2,6 +2,8 @@ import pandas as pd
 import joblib
 from sklearn.neighbors import NearestNeighbors
 import movieposters
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 # Load the dataset
 df = pd.read_csv('Movies_1990_2000_2023_en_filtered.csv')
@@ -32,14 +34,24 @@ tfidf_vectorizer = joblib.load('Models/tfidf_vectorizer_knn_19_20_23.joblib')
 knn_model = joblib.load('Models/knn_model_19_20_23.joblib')
 assert isinstance(knn_model, NearestNeighbors), "knn_model is not a NearestNeighbors instance"
 
-# Function to scrape movie poster URLs
-def get_poster_url(title):
-    try:
-        poster_url = movieposters.get_poster(title)
-        return poster_url
-    except Exception as e:  # Catch other potential exceptions
-        return "https://via.placeholder.com/150" 
-
+# Function to fetch poster URLs concurrently
+def fetch_poster_urls(movie_titles):
+    poster_urls = {}
+    
+    def fetch_poster(title):
+        try:
+            poster_url = movieposters.get_poster(title)  # Replace with actual poster fetching logic
+            poster_urls[title] = poster_url
+        except Exception as e:
+            print(f"Error fetching poster for {title}: {e}")
+            poster_urls[title] = "https://via.placeholder.com/150"  # Placeholder URL
+    
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(fetch_poster, title) for title in movie_titles]
+        for future in as_completed(futures):
+            pass  # Wait for all threads to complete
+    
+    return poster_urls
 
 # Function to get recommendations
 def get_recommendations(title, nn_model=knn_model, df=df, tfidf=tfidf_vectorizer, num_recommendations=10):
@@ -57,5 +69,12 @@ def get_recommendations(title, nn_model=knn_model, df=df, tfidf=tfidf_vectorizer
     # Sort recommendations by release date (newest first)
     recommendations['release_date'] = pd.to_datetime(recommendations['release_date'])
     recommendations = recommendations.sort_values(by='release_date', ascending=False).reset_index(drop=True)
+    
+    # Fetch poster URLs concurrently
+    movie_titles = recommendations['title'].tolist()
+    poster_urls = fetch_poster_urls(movie_titles)
+    
+    # Add poster URLs to recommendations DataFrame
+    recommendations['poster_url'] = [poster_urls.get(title, "https://via.placeholder.com/150") for title in movie_titles]
     
     return recommendations
