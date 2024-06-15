@@ -4,7 +4,7 @@ from sklearn.neighbors import NearestNeighbors
 import movieposters
 
 # Load the dataset
-df = pd.read_csv('Saved Models/Movies_1990_2023_en.csv')
+df = pd.read_csv('Movies_1990_2000_2023_en_filtered.csv')
 
 # Fill missing values in text columns with an empty string
 text_cols = ['keywords', 'genres', 'overview', 'tagline', 'production_companies', 'production_countries']
@@ -28,8 +28,8 @@ df['combined_features'] = df.apply(lambda row: ' '.join([
 
 
 # Load the pre-trained models
-tfidf_vectorizer = joblib.load('Saved Models/tfidf_vectorizer_knn.joblib')
-knn_model = joblib.load('Saved Models/knn_model.joblib')
+tfidf_vectorizer = joblib.load('Models/tfidf_vectorizer_knn_19_20_23.joblib')
+knn_model = joblib.load('Models/knn_model_19_20_23.joblib')
 assert isinstance(knn_model, NearestNeighbors), "knn_model is not a NearestNeighbors instance"
 
 # Function to scrape movie poster URLs
@@ -42,7 +42,7 @@ def get_poster_url(title):
 
 
 # Function to get recommendations
-def get_recommendations(title, nn_model=knn_model, df=df, tfidf=tfidf_vectorizer, num_recommendations=20):
+def get_recommendations(title, nn_model=knn_model, df=df, tfidf=tfidf_vectorizer, num_recommendations=10):
     if title not in df['title'].values:
         return f"Title '{title}' not found in the dataset."
     

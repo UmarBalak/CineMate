@@ -11,14 +11,20 @@ movie_title = st.selectbox(
     options=df['title'].unique()
 )
 
-if movie_title:
+# Function to display recommendations with movie posters
+def display_recommendations(movie_title):
     recommendations = get_recommendations(movie_title, knn_model, df, tfidf_vectorizer)
     
     if isinstance(recommendations, str):  # Check if the return is an error message
-        st.write(recommendations)
+        st.error(recommendations)
     else:
-        st.write(f"Top 10 movie recommendations for '{movie_title}':")
+        st.subheader(f"Top 10 movie recommendations for '{movie_title}':")
         for idx, row in recommendations.iterrows():
             poster_url = get_poster_url(row['title'])
-            st.image(poster_url, width=100)
+            st.image(poster_url, caption=row['title'], width=200, use_column_width=False)
             st.write(f"{idx + 1}. {row['title']} (Release Date: {row['release_date'].strftime('%Y-%m-%d')})")
+            st.write("---")
+
+# Display recommendations if a movie title is selected
+if movie_title:
+    display_recommendations(movie_title)
