@@ -1,5 +1,5 @@
 import streamlit as st
-from preprocess import get_recommendations, get_random_compliment, default_recommendation, knn_model, tfidf_vectorizer, df
+from preprocess import get_recommendations, get_random_compliment, default_recommendation, convert_runtime, format_adult, knn_model, tfidf_vectorizer, df
 import time
 
 # Streamlit app
@@ -24,9 +24,27 @@ def display_recommendations(movie_title):
     else:
         st.subheader(f"Top 10 movie recommendations for '{movie_title}':")
         for idx, row in recommendations.head(10).iterrows():
-            st.image(row['poster_url'], caption=row['title'], width=200, use_column_width=False)
-            st.write(f"{idx + 1}. {row['title']} (Release Date: {row['release_date'].strftime('%Y-%m-%d')})")
+            with st.container():
+                col1, col2 = st.columns([1, 2])  # Adjust the ratio if needed
+                with col1:
+                    st.image(row['poster_url'], caption=row['title'], width=205.5, use_column_width=False)
+                    # st.write("---")
+                with col2:
+                    st.markdown("<br>", unsafe_allow_html=True)  # Add space above movie name
+                    st.write(f"**{idx + 1}. {row['title']}**")
+                    st.markdown(
+                        f"<p style='font-style: italic; color: gray;'>\"{row['tagline']}\"</p>",
+                        unsafe_allow_html=True
+                    )
+                    st.write(f"Release Date: {row['release_date'].strftime('%Y-%m-%d')}")
+                    st.write(f"Rating: {row['vote_average']}")
+                    st.write(f"Runtime: {convert_runtime(row['runtime'])}")
+                    st.write(f"Adult: {format_adult(row['adult'])}")
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    # st.write("---")
             st.write("---")
+
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(elapsed_time)

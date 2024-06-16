@@ -8,7 +8,7 @@ import streamlit as st
 import random
 
 # Load the dataset
-df = pd.read_csv('Movies_90_2k_23_en_filtered_without_animation_greaterthan6.csv')
+df = pd.read_csv('75k_Movies_90_2k_23_en_filtered_wout_anime_gt5.csv')
 
 # Fill missing values in text columns with an empty string
 text_cols = ['keywords', 'genres', 'overview', 'tagline', 'production_companies', 'production_countries']
@@ -32,8 +32,8 @@ df['combined_features'] = df.apply(lambda row: ' '.join([
 
 
 # Load the pre-trained models
-tfidf_vectorizer = joblib.load('Models/tfidf_vectorizer_knn_19_20_23_wout_anime_gt6.joblib')
-knn_model = joblib.load('Models/knn_model_19_20_23_wout_anime_gt6.joblib')
+tfidf_vectorizer = joblib.load('Models/75k_tfidf_vector_knn_19_20_23_wout_anime_gt5.joblib')
+knn_model = joblib.load('Models/75k_knn_model_19_20_23_wout_anime_gt5.joblib')
 assert isinstance(knn_model, NearestNeighbors), "knn_model is not a NearestNeighbors instance"
 
 
@@ -70,10 +70,7 @@ def get_recommendations(title, _nn_model=knn_model, df=df, _tfidf=tfidf_vectoriz
     movie_indices = indices.flatten()[1:]
     # print(type(movie_indices))
     
-    recommendations = df.iloc[movie_indices].reset_index(drop=True)
-
-    # Sort recommendations by vote_average in descending order
-    recommendations = recommendations.sort_values(by='release_date', ascending=False).reset_index(drop=True)
+    recommendations = df.iloc[movie_indices].reset_index(drop=True)  
     
     # Fetch poster URLs concurrently
     movie_titles = recommendations['title'].tolist()
@@ -119,3 +116,12 @@ def default_recommendation():
     d_recommendation['poster_url'] = [poster_urls.get(title, "https://via.placeholder.com/150") for title in movie_titles]
 
     return d_recommendation
+
+
+def convert_runtime(minutes):
+    hours = minutes // 60
+    mins = minutes % 60
+    return f"{hours} hrs {mins} mins"
+
+def format_adult(adult):
+    return "Yes" if adult else "No"
