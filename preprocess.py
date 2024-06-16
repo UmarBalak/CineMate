@@ -73,7 +73,7 @@ def get_recommendations(title, _nn_model=knn_model, df=df, _tfidf=tfidf_vectoriz
     recommendations = df.iloc[movie_indices].reset_index(drop=True)
 
     # Sort recommendations by vote_average in descending order
-    recommendations = recommendations.sort_values(by='vote_average', ascending=False).reset_index(drop=True)
+    recommendations = recommendations.sort_values(by='release_date', ascending=False).reset_index(drop=True)
     
     # Fetch poster URLs concurrently
     movie_titles = recommendations['title'].tolist()
