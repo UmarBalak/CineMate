@@ -39,9 +39,9 @@ def display_recommendations(movie_title):
                     st.write(f"Release Date: {row['release_date'].strftime('%Y-%m-%d')}")
                     st.write(f"Rating: {row['vote_average']}")
                     st.write(f"Runtime: {convert_runtime(row['runtime'])}")
-                    st.write(f"Adult: {format_adult(row['adult'])}")
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    st.markdown("<br>", unsafe_allow_html=True)
+                    # st.write(f"Adult: {format_adult(row['adult'])}")
+                    # st.markdown("<br>", unsafe_allow_html=True)
+                    # st.markdown("<br>", unsafe_allow_html=True)
                     # st.write("---")
             st.write("---")
 
