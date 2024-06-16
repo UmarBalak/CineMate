@@ -1,12 +1,14 @@
 import pandas as pd
+import numpy as np
 import joblib
 from sklearn.neighbors import NearestNeighbors
 import movieposters
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
+import streamlit as st
+import random
 
 # Load the dataset
-df = pd.read_csv('Movies_1990_2000_2023_en_filtered.csv')
+df = pd.read_csv('Movies_90_2k_23_en_filtered_without_animation_greaterthan6.csv')
 
 # Fill missing values in text columns with an empty string
 text_cols = ['keywords', 'genres', 'overview', 'tagline', 'production_companies', 'production_countries']
@@ -30,14 +32,16 @@ df['combined_features'] = df.apply(lambda row: ' '.join([
 
 
 # Load the pre-trained models
-tfidf_vectorizer = joblib.load('Models/tfidf_vectorizer_knn_19_20_23.joblib')
-knn_model = joblib.load('Models/knn_model_19_20_23.joblib')
+tfidf_vectorizer = joblib.load('Models/tfidf_vectorizer_knn_19_20_23_wout_anime_gt6.joblib')
+knn_model = joblib.load('Models/knn_model_19_20_23_wout_anime_gt6.joblib')
 assert isinstance(knn_model, NearestNeighbors), "knn_model is not a NearestNeighbors instance"
 
+
 # Function to fetch poster URLs concurrently
+# @st.cache_data(show_spinner="Fetching data from API...")
 def fetch_poster_urls(movie_titles):
     poster_urls = {}
-    
+    # @st.cache_data(show_spinner="Fetching data from API...")
     def fetch_poster(title):
         try:
             poster_url = movieposters.get_poster(title)  # Replace with actual poster fetching logic
@@ -54,27 +58,64 @@ def fetch_poster_urls(movie_titles):
     return poster_urls
 
 # Function to get recommendations
-def get_recommendations(title, nn_model=knn_model, df=df, tfidf=tfidf_vectorizer, num_recommendations=10):
+@st.cache_data(show_spinner="🎥 Fetching movie recommendations... Grab some popcorn! 🍿")
+def get_recommendations(title, _nn_model=knn_model, df=df, _tfidf=tfidf_vectorizer, num_recommendations=20):
     if title not in df['title'].values:
         return f"Title '{title}' not found in the dataset."
     
     idx = df.index[df['title'] == title].tolist()[0]
     selected_movie = df.iloc[idx]
-    tfidf_vector = tfidf.transform([selected_movie['combined_features']])
-    distances, indices = nn_model.kneighbors(tfidf_vector, n_neighbors=num_recommendations + 1)
+    tfidf_vector = _tfidf.transform([selected_movie['combined_features']])
+    distances, indices = _nn_model.kneighbors(tfidf_vector, n_neighbors=num_recommendations + 1)
     movie_indices = indices.flatten()[1:]
+    # print(type(movie_indices))
     
-    recommendations = df.iloc[movie_indices][['title', 'release_date']].reset_index(drop=True)
-    
-    # Sort recommendations by release date (newest first)
-    recommendations['release_date'] = pd.to_datetime(recommendations['release_date'])
-    recommendations = recommendations.sort_values(by='release_date', ascending=False).reset_index(drop=True)
+    recommendations = df.iloc[movie_indices].reset_index(drop=True)
+
+    # Sort recommendations by vote_average in descending order
+    recommendations = recommendations.sort_values(by='vote_average', ascending=False).reset_index(drop=True)
     
     # Fetch poster URLs concurrently
     movie_titles = recommendations['title'].tolist()
     poster_urls = fetch_poster_urls(movie_titles)
     
     # Add poster URLs to recommendations DataFrame
-    recommendations['poster_url'] = [poster_urls.get(title, "https://via.placeholder.com/150") for title in movie_titles]
+    recommendations['poster_url'] = [poster_urls.get(title, "https://via.placeholder.com/200") for title in movie_titles]
     
     return recommendations
+
+
+def get_random_compliment():
+    compliments = [
+        "Great taste!",
+        "Excellent choice!",
+        "That's a classic!",
+        "Nice pick!",
+        "Awesome selection!",
+        "You've got good taste!",
+        "Well chosen!",
+        "Fantastic pick!",
+        "Impressive!",
+        "You know your movies!",
+        "Outstanding choice!",
+        "Top-notch selection!",
+        "Brilliant!",
+        "Way to go!",
+        "Well done!",
+        "Superb!",
+        "Terrific choice!",
+        "Spot on!",
+        "A masterpiece of a choice!",
+        "Exceptional taste!"
+    ]
+    return random.choice(compliments)
+
+
+def default_recommendation():
+    d_movie_indices = np.array([47, 15, 17, 52, 43, 211, 87, 25, 18, 240])
+    d_recommendation = df.iloc[d_movie_indices].reset_index(drop=True)
+    movie_titles = d_recommendation['title'].tolist()
+    poster_urls = fetch_poster_urls(movie_titles)
+    d_recommendation['poster_url'] = [poster_urls.get(title, "https://via.placeholder.com/150") for title in movie_titles]
+
+    return d_recommendation
