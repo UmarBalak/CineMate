@@ -1,5 +1,5 @@
 import streamlit as st
-from preprocess import get_recommendations, get_random_compliment, default_recommendation, convert_runtime, format_adult, knn_model, tfidf_vectorizer, df
+from preprocess1 import get_recommendations, get_random_compliment, default_recommendation, convert_runtime, format_adult, knn_model, tfidf_vectorizer, df
 import time
 
 # Streamlit app
